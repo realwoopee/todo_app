@@ -1,0 +1,21 @@
+#list {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    margin: auto;
+    width: 30%;
+}
+
+
+.buttons {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+
+.task {
+    display: flex;
+    width: 100%;
+    gap: 5px;
+    justify-content: space-between;
+}
