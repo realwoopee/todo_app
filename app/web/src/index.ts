@@ -43,7 +43,7 @@ const importTasks = async () => {
         if(!fileInput.files) return;
         var data = JSON.parse(await fileInput.files[0].text())
         if(!Array.isArray(data)) return;
-        if(!data.every(v => 'id' in v && 'isDone' in v && 'text' in v && 'inEdit' in v)) return;
+        if(!data.every(v => 'id' in v && 'isDone' in v && 'text' in v)) return;
         await loadTasks(data);
         render();
     }
