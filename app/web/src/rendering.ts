@@ -1,4 +1,4 @@
-import { Task } from "./task";
+import { TodoItem } from "./api";
 import { killAllChildren } from "./utils";
 
 const renderButton = (text: string, action: () => void) => {
@@ -12,40 +12,28 @@ const renderButton = (text: string, action: () => void) => {
     return elem;
 }
 
-const renderTask = (data: Task, onToggle: (id: string) => void, onChange: (id: string, text: string) => void, onEdit: (id: string) => void, onDelete: (id: string) => void) => {
+const renderTask = (data: TodoItem, onToggle: (id: string) => void, onChange: (id: string) => void, onDelete: (id: string) => void) => {
     const taskSpan = document.createElement("span");
     taskSpan.classList.add("task");
 
     const taskCheckbox = document.createElement("input");
     taskCheckbox.type = "checkbox";
-    taskCheckbox.checked = data.isDone;
+    taskCheckbox.checked = data.isDone ?? false;
     taskCheckbox.onclick = function toggleHandler(this: GlobalEventHandlers, ev: MouseEvent) {
         ev.preventDefault();
         onToggle(data.id);
     }
     taskSpan.appendChild(taskCheckbox);
 
-    if(!data.inEdit) {
-        const taskText = document.createElement("span");
-        taskText.innerText = data.text;
-        taskSpan.appendChild(taskText);
-    }
-    else {
-        const textInput = document.createElement("input");
-        textInput.type = "text";
-        textInput.value = data.text;
-        textInput.onchange = function onchange(this, e) {
-            onChange(data.id, (e.target as HTMLInputElement).value)
-        }
-
-        taskSpan.appendChild(textInput);
-    }
+    const taskText = document.createElement("span");
+    taskText.innerText = data.text ?? '';
+    taskSpan.appendChild(taskText);
 
     
     const btnSpan = document.createElement("span");
     btnSpan.classList.add("buttons");
 
-    btnSpan.appendChild(renderButton(data.inEdit ? 'Save' : 'Edit', () => onEdit(data.id)));
+    btnSpan.appendChild(renderButton('Edit', () => onChange(data.id)));
     btnSpan.appendChild(renderButton('Delete', () => onDelete(data.id)));
 
     taskSpan.appendChild(btnSpan);
@@ -53,11 +41,11 @@ const renderTask = (data: Task, onToggle: (id: string) => void, onChange: (id: s
     return taskSpan;
 }
 
-const renderList = (data: Task[], onToggle: (id: string) => void, onChange: (id: string, text: string) => void, onEdit: (id: string) => void, onDelete: (id: string) => void) => {
+const renderList = (data: TodoItem[], onToggle: (id: string) => void, onChange: (id: string) => void, onDelete: (id: string) => void) => {
     const listEl = document.getElementById("list");
     if(!listEl) return;
     killAllChildren(listEl)
-    data.map(t => renderTask(t, onToggle, onChange, onEdit, onDelete)).forEach((taskSpan) => listEl.appendChild(taskSpan));
+    data.map(t => renderTask(t, onToggle, onChange, onDelete)).forEach((taskSpan) => listEl.appendChild(taskSpan));
 };
 
 export { renderList, renderButton };

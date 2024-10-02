@@ -10,6 +10,7 @@
     "@types/node": "^20.11.30",
     "@types/uuid": "^10",
     "glob": "^10.3.10",
+    "openapi-typescript-codegen": "^0.29.0",
     "typescript": "^5.4.3",
     "vite": "^5.2.6"
   },

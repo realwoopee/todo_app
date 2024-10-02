@@ -1,45 +1,35 @@
-import { v4 as uuidv4 } from 'uuid';
-import { saveAs } from 'file-saver';
-import { killAllChildren } from './utils';
-import { Task } from './task';
+import {tasks, addTask, deleteTask, editTask, loadTasks, reloadTasks, updateBackendUrl} from './data-provider'
 import { renderButton, renderList } from './rendering';
-
+import { saveAs } from 'file-saver';
 
 let render = () => {};
 
-const tasks: Task[] = [{id: '0', isDone: false, text: 'abc', inEdit: false},{id: '2', isDone: true, text: 'cbd', inEdit: false},{id: '3', isDone: false, text: 'triple e', inEdit: false}];
-
-const addTask = () => {
-    tasks.unshift({id: uuidv4(), isDone: false, text: '', inEdit: true})
+const add = async () => {
+    await addTask({isDone: false, text: ''})
     render();
 }
 
-const toggleTask = (id: string) => {
+const toggle = async (id: string) => {
     const task = tasks.find(x => x.id == id);
     if (!task) return;
-    task.isDone = !task.isDone;
+    await editTask(id, {isDone: !task.isDone})
     render();
 }
 
-const editTask = (id: string) => {
+const edit = async (id: string) => {
     const task = tasks.find(x => x.id == id);
     if (!task) return;
-    task.inEdit = !task.inEdit;
+    const newText = prompt("Enter new text", task.text ?? '');
+    if(newText)
+        await editTask(id, {text: newText});
     render();
 }
 
-const deleteTask = (id: string) => {
+const remove = async (id: string) => {
     const task = tasks.find(x => x.id == id);
     if (!task) return;
-    const index = tasks.indexOf(task);
-    if(index > -1) tasks.splice(index, 1)
+    await deleteTask(id);
     render();
-}
-
-const textChange = (id: string, text: string) => {
-    const task = tasks.find(x => x.id == id);
-    if (!task) return;
-    task.text = text;
 }
 
 const exportTasks = () => {
@@ -54,17 +44,18 @@ const importTasks = async () => {
         var data = JSON.parse(await fileInput.files[0].text())
         if(!Array.isArray(data)) return;
         if(!data.every(v => 'id' in v && 'isDone' in v && 'text' in v && 'inEdit' in v)) return;
-        tasks.splice(0, tasks.length, ...data);
+        await loadTasks(data);
         render();
     }
     fileInput.click();
 }
 
 var controls = document.getElementById("controls")!;
-controls.appendChild(renderButton("Add", addTask));
+controls.appendChild(renderButton("Add", add));
 controls.appendChild(renderButton("Import", importTasks));
 controls.appendChild(renderButton("Export", exportTasks));
+controls.appendChild(renderButton("Change backend URI", updateBackendUrl));
 
-render = () => renderList(tasks, toggleTask, textChange, editTask, deleteTask);
-
+render = () => renderList(tasks, toggle, edit, remove);
+await reloadTasks();
 render();
