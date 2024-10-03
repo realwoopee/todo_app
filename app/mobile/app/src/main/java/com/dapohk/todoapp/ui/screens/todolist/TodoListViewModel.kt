@@ -1,18 +1,18 @@
 package com.dapohk.todoapp.ui.screens.todolist
 
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.dapohk.todoapp.api.TodoItem
 import com.dapohk.todoapp.data.tasks.TasksRepository
-import com.dapohk.todoapp.models.Task
+import com.dapohk.todoapp.data.tasks.impl.DebugTasksRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
+import java.net.URL
 
 class TodoListViewModel(private val tasksRepository: TasksRepository) : ViewModel() {
     private val _state = MutableStateFlow(TodoListViewModelState())
@@ -20,8 +20,6 @@ class TodoListViewModel(private val tasksRepository: TasksRepository) : ViewMode
         .stateIn(viewModelScope, SharingStarted.Eagerly, _state.value.toUiState())
 
     init {
-        _state.update { it.copy(tasks = tasksRepository.get()) }
-
         viewModelScope.launch {
             tasksRepository.observeTasks().collect { tasks ->
                 val newSelectedTasks =
@@ -29,40 +27,68 @@ class TodoListViewModel(private val tasksRepository: TasksRepository) : ViewMode
                 _state.update { it.copy(tasks = tasks, selectedTasks = newSelectedTasks) }
             }
         }
+        viewModelScope.launch {
+            // прогрев
+            tasksRepository.get()
+        }
+    }
+
+    fun onBackendUrlUpdate(url: String) {
+        (tasksRepository as DebugTasksRepository).updateBackendUrl(url.trimEnd('/'));
+    }
+
+    fun onRefresh() {
+        viewModelScope.launch {
+            tasksRepository.get()
+        }
     }
 
     fun onNew() {
-        tasksRepository.add(false, "")
+        viewModelScope.launch {
+            tasksRepository.add(false, "")
+        }
     }
 
     fun onDeleteSelected() {
-        tasksRepository.delete(_state.value.selectedTasks.map { it.id }.toSet())
+        viewModelScope.launch {
+            tasksRepository.delete(_state.value.selectedTasks.map { it.id }.toSet())
+        }
     }
 
-    fun onEdit(id: UUID, text: String) {
-        tasksRepository.edit(id, text = text)
+    fun onEdit(id: String, text: String) {
+        viewModelScope.launch {
+            tasksRepository.edit(id, text = text)
+        }
     }
 
-    fun onSelect(id: UUID) {
-        val task = tasksRepository.get(id) ?: return
-        _state.update { it.copy(selectedTasks = if (task in _state.value.selectedTasks) it.selectedTasks - task else it.selectedTasks + task) }
+    fun onSelect(id: String) {
+        viewModelScope.launch {
+            val task = tasksRepository.get(id) ?: return@launch
+            _state.update { it.copy(selectedTasks = if (task in _state.value.selectedTasks) it.selectedTasks - task else it.selectedTasks + task) }
+        }
     }
 
     fun onSelectionClear() {
         _state.update { it.copy(selectedTasks = emptyList()) }
     }
 
-    fun onToggle(id: UUID) {
-        val task = tasksRepository.get(id) ?: return
-        tasksRepository.edit(id, isDone = !task.isDone)
+    fun onToggle(id: String) {
+        viewModelScope.launch {
+            val task = tasksRepository.get(id) ?: return@launch
+            tasksRepository.edit(id, isDone = !task.isDone)
+        }
     }
 
     fun onExport() {
-        tasksRepository.export()
+        viewModelScope.launch {
+            tasksRepository.export()
+        }
     }
 
     fun onImport() {
-        tasksRepository.import()
+        viewModelScope.launch {
+            tasksRepository.import()
+        }
     }
 
     companion object {
@@ -79,8 +105,8 @@ class TodoListViewModel(private val tasksRepository: TasksRepository) : ViewMode
 }
 
 private data class TodoListViewModelState(
-    val tasks: List<Task> = emptyList(),
-    val selectedTasks: List<Task> = emptyList()
+    val tasks: List<TodoItem> = emptyList(),
+    val selectedTasks: List<TodoItem> = emptyList()
 ) {
     fun toUiState(): TodoListUiState =
         if (tasks.isNotEmpty()) {
@@ -94,7 +120,7 @@ sealed class TodoListUiState {
     data object NoTasks : TodoListUiState()
 
     data class HasTasks(
-        val tasks: List<Task>,
-        val selectedTasks: List<Task>
+        val tasks: List<TodoItem>,
+        val selectedTasks: List<TodoItem>
     ) : TodoListUiState()
 }

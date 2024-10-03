@@ -3,7 +3,6 @@ package com.dapohk.todoapp.ui.screens.todolist
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import java.util.UUID
 
 @Composable
 fun TodoListRoute(todoListViewModel: TodoListViewModel) {
@@ -18,7 +17,8 @@ fun TodoListRoute(todoListViewModel: TodoListViewModel) {
         onEditTask = todoListViewModel::onEdit,
         onClearSelected = todoListViewModel::onSelectionClear,
         onExportTasks = todoListViewModel::onExport,
-        onImportTasks = todoListViewModel::onImport
+        onImportTasks = todoListViewModel::onImport,
+        onRefreshTasks = todoListViewModel::onRefresh
     )
 }
 
@@ -26,13 +26,14 @@ fun TodoListRoute(todoListViewModel: TodoListViewModel) {
 private fun TodoListRoute(
     uiState: TodoListUiState,
     onAddTask: () -> Unit,
-    onToggleTask: (id: UUID) -> Unit,
-    onEditTask: (id: UUID, text: String) -> Unit,
-    onSelectTask: (id: UUID) -> Unit,
+    onToggleTask: (id: String) -> Unit,
+    onEditTask: (id: String, text: String) -> Unit,
+    onSelectTask: (id: String) -> Unit,
     onDeleteSelected: () -> Unit,
     onClearSelected: () -> Unit,
     onExportTasks: () -> Unit,
-    onImportTasks: () -> Unit
+    onImportTasks: () -> Unit,
+    onRefreshTasks: () -> Unit,
 ) {
     when (uiState) {
         is TodoListUiState.HasTasks -> TodoListTasksScreen(
@@ -44,13 +45,15 @@ private fun TodoListRoute(
             onEditTask,
             onClearSelected,
             onExportTasks,
-            onImportTasks
+            onImportTasks,
+            onRefreshTasks
         )
 
         is TodoListUiState.NoTasks -> TodoListEmptyScreen(
             uiState,
             onAddTask,
-            onImportTasks
+            onImportTasks,
+            onRefreshTasks
         )
     }
 }

@@ -82,6 +82,8 @@ dependencies {
     //implementation("androidx.compose.material:material-icons-extended")
 
     implementation(libs.speed.dial.compose)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
 //    implementation(libs.androidx.core.ktx)
 //    implementation(libs.androidx.lifecycle.runtime.ktx)
 //    implementation(libs.androidx.activity.compose)
